@@ -2,12 +2,15 @@
 
 body{
     font-family: 'Outfit';
+    height: 85dvh;
 }
 
 .container{
     padding-top: 20px;
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 20px;
 }
 
 .container label{
@@ -27,4 +30,56 @@ body{
     border: solid 1px #ddd;
     outline: none;
     border-radius: 20px;
+}
+
+.container button{
+    width: 100px;
+    height: 30px;
+}
+
+.perguntas{
+    margin: 50px 10px 0 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.perguntas .per{
+    width: 350px;
+    border: solid 1px #ddd;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    text-align: center;
+}
+
+.perguntas .per label{
+    margin: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.perguntas .per label select{
+    height: 30px;
+    width: 50px;
+}
+
+.perguntas .per textarea{
+    font-family: 'Outfit';
+    padding: 5px;
+    box-sizing: border-box;
+    resize: none;
+    height: 250px;
+    width: 90%;
+}
+
+.perguntas .alternativas{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.alternativas input{
+    padding: 5px;
+    margin: 5px 20px;
 }
