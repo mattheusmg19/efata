@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Jogo de Perguntas</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .hidden { display: none; }
+    .correct { border: 2px solid green; }
+    .wrong { border: 2px solid red; }
+    button { margin-top: 10px; }
+    .pergunta-container { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Jogo de Perguntas</h1>
+
+  <!-- Formulário de cadastro -->
+  <div id="cadastro">
+    <h2>Cadastro de Perguntas</h2>
+    <label for="jogadorSelect">Selecione o Jogador:</label>
+    <select id="jogadorSelect">
+      <option value="">Selecione</option>
+      <option value="Jogador1">Jogador 1</option>
+      <option value="Jogador2">Jogador 2</option>
+      <option value="Jogador3">Jogador 3</option>
+      <option value="Jogador4">Jogador 4</option>
+    </select>
+
+    <div id="perguntasContainer"></div>
+    <button id="salvarBtn">Salvar Perguntas</button>
+  </div>
+
+  <hr>
+  <button id="sortearBtn">Sortear</button>
+
+  <!-- Interface do jogo -->
+  <div id="jogo" class="hidden">
+    <h2>Rodada do Jogo</h2>
+    <label for="jogadorRodada">Quem vai jogar agora?</label>
+    <select id="jogadorRodada">
+      <option value="">Selecione</option>
+      <option value="Jogador1">Jogador 1</option>
+      <option value="Jogador2">Jogador 2</option>
+      <option value="Jogador3">Jogador 3</option>
+      <option value="Jogador4">Jogador 4</option>
+    </select>
+    <button id="perguntarBtn">Perguntar</button>
+
+    <div id="perguntaBox" class="pergunta-container"></div>
+  </div>
+
+  <script>
+    const perguntasContainer = document.getElementById("perguntasContainer");
+    const salvarBtn = document.getElementById("salvarBtn");
+    const sortearBtn = document.getElementById("sortearBtn");
+    const jogoDiv = document.getElementById("jogo");
+    const cadastroDiv = document.getElementById("cadastro");
+    const jogadorRodada = document.getElementById("jogadorRodada");
+    const perguntarBtn = document.getElementById("perguntarBtn");
+    const perguntaBox = document.getElementById("perguntaBox");
+
+    let perguntasSorteadas = [];
+    let perguntasDisponiveis = [];
+    let respondidas = [];
+
+    function criarInputs() {
+      perguntasContainer.innerHTML = "";
+      for (let i = 0; i < 5; i++) {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <h4>Pergunta ${i + 1}</h4>
+          <textarea placeholder="Pergunta" required></textarea><br>
+          <input placeholder="Alternativa A" required>
+          <input placeholder="Alternativa B" required>
+          <input placeholder="Alternativa C" required>
+          <input placeholder="Alternativa D" required>
+          <select>
+            <option value="">Correta</option>
+            <option value="0">A</option>
+            <option value="1">B</option>
+            <option value="2">C</option>
+            <option value="3">D</option>
+          </select>
+        `;
+        perguntasContainer.appendChild(div);
+      }
+    }
+
+    criarInputs();
+
+    salvarBtn.addEventListener("click", () => {
+      const jogador = document.getElementById("jogadorSelect").value;
+      if (!jogador) return alert("Selecione um jogador!");
+
+      const inputs = perguntasContainer.querySelectorAll("div");
+      const perguntas = [];
+      for (const div of inputs) {
+        const texto = div.querySelector("textarea").value.trim();
+        const alternativas = [...div.querySelectorAll("input")].map(i => i.value.trim());
+        const correta = div.querySelector("select").value;
+
+        if (!texto || alternativas.includes("") || correta === "") return alert("Preencha todos os campos!");
+
+        perguntas.push({ texto, alternativas, correta: parseInt(correta), autor: jogador });
+      }
+
+      localStorage.setItem(`perguntas_${jogador}`, JSON.stringify(perguntas));
+      criarInputs();
+      document.getElementById("jogadorSelect").value = "";
+      alert("Perguntas salvas!");
+    });
+
+    sortearBtn.addEventListener("click", () => {
+      cadastroDiv.classList.add("hidden");
+      jogoDiv.classList.remove("hidden");
+      perguntasSorteadas = [];
+      respondidas = [];
+
+      const jogadores = ["Jogador1", "Jogador2", "Jogador3", "Jogador4"];
+      const todasPerguntas = [];
+
+      jogadores.forEach(j => {
+        const perguntas = JSON.parse(localStorage.getItem(`perguntas_${j}`)) || [];
+        todasPerguntas.push(...perguntas);
+      });
+
+      const perguntasPorJogador = {};
+      jogadores.forEach(j => perguntasPorJogador[j] = []);
+
+      while (perguntasSorteadas.length < 20) {
+        const pergunta = todasPerguntas.splice(Math.floor(Math.random() * todasPerguntas.length), 1)[0];
+        if (
+          pergunta &&
+          perguntasPorJogador[pergunta.autor].length < 5 &&
+          !perguntasSorteadas.find(p => p.texto === pergunta.texto)
+        ) {
+          perguntasSorteadas.push(pergunta);
+          perguntasPorJogador[pergunta.autor].push(pergunta);
+        }
+      }
+    });
+
+    perguntarBtn.addEventListener("click", () => {
+      const jogadorAtual = jogadorRodada.value;
+      if (!jogadorAtual) return alert("Selecione o jogador da vez!");
+
+      const restantes = perguntasSorteadas.filter(p => !respondidas.includes(p) && p.autor !== jogadorAtual);
+      if (!restantes.length) return alert("Todas as perguntas já foram feitas!");
+
+      const pergunta = restantes[Math.floor(Math.random() * restantes.length)];
+      respondidas.push(pergunta);
+
+      perguntaBox.innerHTML = `<h3>${pergunta.texto}</h3>`;
+      pergunta.alternativas.forEach((alt, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = alt;
+        btn.onclick = () => {
+          if (i === pergunta.correta) {
+            btn.classList.add("correct");
+            alert("Resposta correta!");
+          } else {
+            btn.classList.add("wrong");
+            alert("Resposta errada!");
+          }
+          [...perguntaBox.querySelectorAll("button")].forEach(b => b.disabled = true);
+        };
+        perguntaBox.appendChild(btn);
+      });
+    });
+  </script>
+</body>
+</html>
